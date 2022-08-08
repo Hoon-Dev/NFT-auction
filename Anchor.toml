@@ -1,0 +1,14 @@
+[features]
+seeds = false
+[programs.localnet]
+nft_auction = "HBUhjeux3yF45gErBG2NVNnuoAG9Pck3SVA34ruAcUig"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "/Users/hoon/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./anchor.test.tsconfig.json -t 1000000 tests/**/*.ts"

@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "name": "nft_auction",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "metadata": {
+    "address": "HBUhjeux3yF45gErBG2NVNnuoAG9Pck3SVA34ruAcUig"
+  }
+}

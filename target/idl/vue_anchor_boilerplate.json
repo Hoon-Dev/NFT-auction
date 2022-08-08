@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "name": "vue_anchor_boilerplate",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "metadata": {
+    "address": "ASTa2tZB6ghqSzNGz6FeZnhfsQHiPJxDxi1dT6p5cLFF"
+  }
+}
