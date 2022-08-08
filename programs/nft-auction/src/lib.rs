@@ -5,6 +5,8 @@ use anchor_spl::{
         Token,
         TokenAccount,
         Mint,
+        MintTo
+        mint_to
     },
     mint,
     associated_token,
@@ -58,6 +60,9 @@ pub struct InitializeCreator<'info> {
     /// CHECK: NEED VERIFY
     pub nft_collection_master_edition: AccountInfo<'info>,
 
+    /// CHECK: NEED VERIFY
+    pub metadata_program: AccountInfo<'info>,
+
     #[account(address = rent::ID)]
     pub rent: Sysvar<'info, Rent>,
     #[account(address = token::ID)]
@@ -66,4 +71,21 @@ pub struct InitializeCreator<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(address = system_program::ID)]
     pub system_program: Program<'info, System>
+}
+
+impl<'info> InitializeCreator<'info> {
+    fn mint_collection_token(&self) -> Result<()> {
+        mint_to(
+            CpiContext::new(
+                self.metadata_program.to_account_info(),
+                MintTo {
+                    mint: self.nft_collection_mint.to_account_info(),
+                    to: self.nft_collection_token_account.to_account_info(),
+                    authority: self.creator.to_account_info()
+                }
+            ),
+            1 as u64
+        )?;
+        Ok(())
+    }
 }
