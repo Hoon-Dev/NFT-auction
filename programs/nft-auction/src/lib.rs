@@ -5,7 +5,7 @@ use anchor_spl::{
         Token,
         TokenAccount,
         Mint,
-        MintTo
+        MintTo,
         mint_to
     },
     mint,
@@ -31,6 +31,7 @@ pub mod nft_auction {
     use super::*;
 
     pub fn initialize_creator(ctx: Context<InitializeCreator>) -> Result<()> {
+        ctx.accounts.mint_collection_token()?;
         Ok(())
     }
 }
@@ -74,7 +75,7 @@ pub struct InitializeCreator<'info> {
 }
 
 impl<'info> InitializeCreator<'info> {
-    fn mint_collection_token(&self) -> Result<()> {
+    pub fn mint_collection_token(&self) -> Result<()> {
         mint_to(
             CpiContext::new(
                 self.metadata_program.to_account_info(),
