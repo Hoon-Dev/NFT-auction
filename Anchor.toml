@@ -1,10 +1,19 @@
 [features]
 seeds = false
+
 [programs.localnet]
 nft_auction = "HBUhjeux3yF45gErBG2NVNnuoAG9Pck3SVA34ruAcUig"
 
 [registry]
 url = "https://anchor.projectserum.com"
+
+[[test.genesis]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+program = "dependencies/mpl_token_metadata_v1.3.3.so"
+
+[[test.genesis]]
+address = "hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk"
+program = "dependencies/mpl_auction_house_v1.2.4.so"
 
 [provider]
 cluster = "localnet"
@@ -12,3 +21,4 @@ wallet = "/Users/hoon/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./anchor.test.tsconfig.json -t 1000000 tests/**/*.ts"
+local-validator = "solana-test-validator --reset --bpf-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s ./dependencies/mpl_token_metadata_v1.3.3.so --bpf-program hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk ./dependencies/mpl_auction_house_v1.2.4.so"
