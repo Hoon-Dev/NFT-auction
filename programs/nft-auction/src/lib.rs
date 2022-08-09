@@ -14,7 +14,13 @@ use anchor_spl::{
 };
 use solana_program::{
     system_program,
-    sysvar::rent
+    sysvar::rent, program::invoke
+};
+use mpl_token_metadata::{
+    instruction::{
+        create_metadata_accounts_v3,
+        create_master_edition_v3
+    }
 };
 
 declare_id!("HBUhjeux3yF45gErBG2NVNnuoAG9Pck3SVA34ruAcUig");
@@ -30,8 +36,15 @@ declare_id!("HBUhjeux3yF45gErBG2NVNnuoAG9Pck3SVA34ruAcUig");
 pub mod nft_auction {
     use super::*;
 
-    pub fn initialize_creator(ctx: Context<InitializeCreator>) -> Result<()> {
+    pub fn initialize_creator(
+        ctx: Context<InitializeCreator>,
+        _nft_collection_metadata_bump: u8,
+        _nft_collection_master_edition_bump: u8,
+        name: String,
+        symbol: String
+    ) -> Result<()> {
         ctx.accounts.mint_collection_token()?;
+        ctx.accounts.create_metadata(&name, &symbol)?;
         ctx.accounts.create_master_edition()?;
         Ok(())
     }
@@ -42,6 +55,10 @@ pub mod nft_auction {
 }
 
 #[derive(Accounts)]
+#[instruction(
+    nft_collection_metadata_bump: u8,
+    nft_collection_master_edition_bump: u8
+)]
 pub struct InitializeCreator<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
@@ -73,7 +90,7 @@ pub struct InitializeCreator<'info> {
             metadata_program.key().as_ref(),
             nft_collection_mint.key().as_ref()
         ],
-        bump = 254,
+        bump = nft_collection_metadata_bump,
         seeds::program = mpl_token_metadata::ID
     )]
     pub nft_collection_metadata: AccountInfo<'info>,
@@ -87,7 +104,7 @@ pub struct InitializeCreator<'info> {
             nft_collection_mint.key().as_ref(),
             b"edition".as_ref()
         ],
-        bump = 254,
+        bump = nft_collection_master_edition_bump,
         seeds::program = mpl_token_metadata::ID
     )]
     pub nft_collection_master_edition: AccountInfo<'info>,
@@ -109,7 +126,7 @@ impl<'info> InitializeCreator<'info> {
     pub fn mint_collection_token(&self) -> Result<()> {
         mint_to(
             CpiContext::new(
-                self.metadata_program.to_account_info(),
+                self.metadata_program.clone(),
                 MintTo {
                     mint: self.nft_collection_mint.to_account_info(),
                     to: self.nft_collection_token_account.to_account_info(),
@@ -119,7 +136,60 @@ impl<'info> InitializeCreator<'info> {
             1 as u64
         )
     }
+
+    pub fn create_metadata(&self, name: &String, symbol: &String) -> Result<()> {
+        invoke(
+            &create_metadata_accounts_v3(
+                self.metadata_program.key(),
+                self.nft_collection_metadata.key(),
+                self.nft_collection_mint.key(),
+                self.creator.key(),
+                self.creator.key(),
+                self.creator.key(),
+                name.into(),
+                symbol.into(),
+                "NO_URI".to_string(),
+                None,
+                0,
+                true,
+                false,
+                None,
+                None,
+                None
+            ),
+            &[
+                self.nft_collection_metadata.to_account_info(),
+                self.nft_collection_mint.to_account_info(),
+                self.creator.to_account_info(),
+                self.system_program.to_account_info(),
+                self.rent.to_account_info()
+            ]
+        )?;
+        Ok(())
+    }
+
     pub fn create_master_edition(&self) -> Result<()> {
+        invoke(
+            &create_master_edition_v3(
+                self.metadata_program.key(),
+                self.nft_collection_master_edition.key(),
+                self.nft_collection_mint.key(),
+                self.creator.key(),
+                self.creator.key(),
+                self.nft_collection_metadata.key(),
+                self.creator.key(),
+                Some(0)
+            ),
+            &[
+                self.nft_collection_master_edition.to_account_info(),
+                self.nft_collection_mint.to_account_info(),
+                self.creator.to_account_info(),
+                self.nft_collection_metadata.to_account_info(),
+                self.token_program.to_account_info(),
+                self.system_program.to_account_info(),
+                self.rent.to_account_info()
+            ]
+        )?;
         Ok(())
     }
 }
