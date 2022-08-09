@@ -17,6 +17,7 @@ use solana_program::{
     sysvar::rent, program::invoke
 };
 use mpl_token_metadata::{
+    state::Metadata,
     instruction::{
         create_metadata_accounts_v3,
         create_master_edition_v3
@@ -28,12 +29,14 @@ declare_id!("HBUhjeux3yF45gErBG2NVNnuoAG9Pck3SVA34ruAcUig");
 /*
     TODO:
     1. NFT collection 민트, 토큰 어카운트 (v)
-    2. NFT 작품 민트, 토큰 어카운트
+    2. NFT 작품 민트, 토큰 어카운트 (-)
     3. NFT 작품 Verify
 */
 
 #[program]
 pub mod nft_auction {
+    use mpl_token_metadata::state::TokenMetadataAccount;
+
     use super::*;
 
     pub fn initialize_creator(
@@ -49,7 +52,8 @@ pub mod nft_auction {
         Ok(())
     }
 
-    pub fn create_nft(ctx: Context<CreateNft>) -> Result<()> {
+    pub fn create_content(ctx: Context<CreateContent>) -> Result<()> {
+        Metadata::from_account_info(a)
         Ok(())
     }
 }
@@ -83,6 +87,7 @@ pub struct InitializeCreator<'info> {
     )]
     pub nft_collection_token_account: Account<'info, TokenAccount>,
 
+    /// CHECK: NFT 콜렉션 메타데이터 PDA
     #[account(
         mut,
         seeds = [
@@ -195,7 +200,43 @@ impl<'info> InitializeCreator<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CreateNft<'info> {
+pub struct CreateContent<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
+
+    #[account(
+        mint::decimals = 0,
+        mint::authority = creator,
+        seeds = [
+            creator.key().as_ref(),
+            b"collection".as_ref()
+        ],
+        bump = 254
+    )]
+    pub nft_collection_mint: Account<'info, Mint>,
+
+    /// CHECK: NFT 콜렉션 메타데이터 PDA
+    #[account(
+        mut,
+        seeds = [
+            b"metadata".as_ref(),
+            metadata_program.key().as_ref(),
+            nft_collection_mint.key().as_ref()
+        ],
+        bump = 254,
+        seeds::program = mpl_token_metadata::ID
+    )]
+    pub nft_collection_metadata: AccountInfo<'info>,
+
+    /// CHECK: 메타데이터 프로그램
+    #[account(address = mpl_token_metadata::ID)]
+    pub metadata_program: AccountInfo<'info>,
+    #[account(address = rent::ID)]
+    pub rent: Sysvar<'info, Rent>,
+    #[account(address = token::ID)]
+    pub token_program: Program<'info, Token>,
+    #[account(address = associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(address = system_program::ID)]
+    pub system_program: Program<'info, System>
 }
